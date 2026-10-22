@@ -40,6 +40,9 @@ def main() -> None:
     p.add_argument("--windowed", action="store_true", help="start as a normal window instead of maximized")
     args = p.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    from .config import CONFIG_FILE
+
+    print(f"Settings file: {CONFIG_FILE}")
 
     port = _free_port(args.port)
     url = f"http://127.0.0.1:{port}/"
