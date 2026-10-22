@@ -7,7 +7,10 @@
       "Bash(.venv/Scripts/python -c \"import webview; print\\('pywebview OK:', webview.__version__\\)\" 2>&1s)",
       "Bash(.venv/Scripts/python -c \"import webview; print\\('pywebview OK'\\)\" 2>&1)",
       "Bash(/f/EGX-Monitor/backend/.venv/Scripts/python -m egx_monitor --server-only)",
-      "Bash(.venv/Scripts/python -c \"\nimport sys\nsys.stdout.reconfigure\\(line_buffering=True\\)\nfrom egx_monitor.__main__ import main\nmain\\(\\)\n\" 2>&1)"
+      "Bash(.venv/Scripts/python -c \"\nimport sys\nsys.stdout.reconfigure\\(line_buffering=True\\)\nfrom egx_monitor.__main__ import main\nmain\\(\\)\n\" 2>&1)",
+      "Bash(.venv/Scripts/python --version)",
+      "Bash(.venv/Scripts/python -c \"import webview; print\\(webview.__version__ if hasattr\\(webview,''__version__''\\) else ''no version attr''\\); import webview.platforms; print\\(dir\\(webview.platforms\\)\\)\")",
+      "Bash(.venv/Scripts/python -c \"\nimport webview\nimport logging\nlogging.basicConfig\\(level=logging.DEBUG\\)\nprint\\('creating window...'\\)\nw = webview.create_window\\('test', 'about:blank'\\)\nprint\\('starting...'\\)\nwebview.start\\(\\)\nprint\\('start returned'\\)\n\" 2>&1)"
     ]
   }
 }
