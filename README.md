@@ -82,7 +82,7 @@ Your settings are stored in `~/.egx-monitor/config.json` (outside the repo, so p
 
 ## Editing the code
 
-```
+```text
 backend/
   egx_monitor/
     __main__.py        starts the server + desktop window
