@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import asyncio
+import logging
+import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -25,12 +27,27 @@ service = MarketService(settings)
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     # Warm the cache while the desktop window is still opening.
-    warmup = asyncio.create_task(service.snapshot())
+    async def warm() -> None:
+        started = time.perf_counter()
+        snap = await service.snapshot()
+        log.info("market data fetched in %.2fs from %s", time.perf_counter() - started, snap["source"]["name"])
+
+    warmup = asyncio.create_task(warm())
     yield
     warmup.cancel()
 
 
 app = FastAPI(title="EGX Monitor", lifespan=lifespan)
+log = logging.getLogger("egx_monitor")
+
+
+@app.middleware("http")
+async def time_api_calls(request, call_next):
+    started = time.perf_counter()
+    response = await call_next(request)
+    if request.url.path.startswith("/api/"):
+        log.info("%s took %.2fs", request.url.path, time.perf_counter() - started)
+    return response
 # The Vite dev server (npm run dev) runs on another port.
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 

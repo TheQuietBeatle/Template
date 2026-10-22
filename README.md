@@ -7,7 +7,25 @@ breadth, EGP exchange rates and an auto-written market brief.
 - **Backend:** Python (FastAPI) fetches and shapes the data and runs the desktop window (pywebview).
 - **Frontend:** TypeScript + Vite, charts by TradingView Lightweight Charts.
 
-## Setup (one time)
+## Install on Windows (no Python or Node needed)
+
+1. Download **EGX-Monitor-Windows.zip** from the
+   [app-latest release](https://github.com/TheQuietBeatle/Template/releases/tag/app-latest).
+2. Unzip it somewhere permanent, e.g. `F:\EGX-Monitor`.
+3. Double-click **EGX Monitor.exe**.
+
+On first run it adds an **EGX Monitor** icon to your desktop and starts itself at login.
+To undo that, run `"EGX Monitor.exe" --uninstall-shortcuts` from that folder. Your settings (`config.json`)
+and a startup log (`egx-monitor.log`) are saved next to the `.exe`.
+
+If Windows SmartScreen warns about an unknown app, click **More info → Run anyway** (the app isn't code-signed).
+The window needs the Microsoft Edge WebView2 runtime, which Windows 10/11 normally already has.
+
+A GitHub Action (`.github/workflows/build-windows.yml`) rebuilds the zip on every push that changes the app.
+
+## Setup from source (for editing the code)
+
+
 
 You need **Python 3.10+** and **Node.js 18+**.
 

@@ -1,16 +1,24 @@
-"""User settings, stored as JSON in config.json at the root of the project folder.
+"""User settings, stored as JSON in config.json.
 
-The file is git-ignored, so pulling updates never overwrites it.
+Running from source, the file sits at the root of the project folder (git-ignored, so pulling
+updates never overwrites it). In the packaged EGX Monitor.exe it sits next to the .exe.
 """
 
 from __future__ import annotations
 
 import json
 import os
+import sys
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+FROZEN = getattr(sys, "frozen", False)  # True inside the packaged .exe (PyInstaller)
+if FROZEN:
+    PROJECT_ROOT = Path(sys.executable).resolve().parent
+    RESOURCES = Path(getattr(sys, "_MEIPASS", PROJECT_ROOT))  # bundled assets
+else:
+    PROJECT_ROOT = Path(__file__).resolve().parents[2]
+    RESOURCES = PROJECT_ROOT
 CONFIG_DIR = Path(os.environ.get("EGX_MONITOR_HOME", PROJECT_ROOT))
 CONFIG_FILE = CONFIG_DIR / "config.json"
 # Earlier versions kept settings in the home folder; carry them over once.
@@ -40,6 +48,8 @@ class Settings:
     refresh_open: int = 15
     refresh_closed: int = 300
     theme: str = "dark"
+    # The packaged .exe adds its desktop + start-at-login shortcuts on first run, once.
+    shortcuts_installed: bool = False
 
     @classmethod
     def load(cls) -> "Settings":

@@ -1,0 +1,86 @@
+# Builds "EGX Monitor.exe" on Windows (no Python or Node needed on your laptop) and publishes it
+# as the "app-latest" release: https://github.com/<owner>/<repo>/releases/tag/app-latest
+name: Build Windows app
+
+on:
+  push:
+    branches: [main, master, "claude/**"]
+    paths: ["backend/**", "frontend/**", "assets/**", ".github/workflows/build-windows.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Build dashboard
+        working-directory: frontend
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Python packages
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt pyinstaller==6.11.1
+
+      - name: Package EGX Monitor.exe
+        working-directory: backend
+        run: >
+          pyinstaller --noconfirm --windowed --name "EGX Monitor"
+          --icon ..\assets\icon.ico
+          --add-data "egx_monitor\static;egx_monitor\static"
+          --add-data "..\assets;assets"
+          --hidden-import egx_monitor.server
+          launcher.py
+
+      - name: Smoke test the packaged app
+        working-directory: backend/dist/EGX Monitor
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath ".\EGX Monitor.exe" -ArgumentList "--server-only","--port","8765" -PassThru
+          $ok = $false
+          foreach ($i in 1..30) {
+            Start-Sleep -Seconds 2
+            try {
+              $page = Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8765/
+              $snap = Invoke-RestMethod http://127.0.0.1:8765/api/snapshot
+              if ($page.StatusCode -eq 200 -and $snap.indices.Count -gt 0) { $ok = $true; break }
+            } catch { }
+          }
+          Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
+          Get-Content .\egx-monitor.log -ErrorAction SilentlyContinue
+          Remove-Item .\egx-monitor.log, .\config.json -ErrorAction SilentlyContinue
+          if (-not $ok) { throw "packaged app did not serve the dashboard" }
+          Write-Host "Source: $($snap.source.name); EGX30 = $($snap.indices[0].last)"
+
+      - name: Zip
+        shell: pwsh
+        run: Compress-Archive -Path "backend\dist\EGX Monitor" -DestinationPath EGX-Monitor-Windows.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: EGX-Monitor-Windows
+          path: EGX-Monitor-Windows.zip
+
+      - name: Publish as the app-latest release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete app-latest --yes --cleanup-tag || true
+          gh release create app-latest EGX-Monitor-Windows.zip \
+            --target "${{ github.sha }}" \
+            --title "EGX Monitor for Windows (latest build)" \
+            --notes "Download EGX-Monitor-Windows.zip, unzip it anywhere (e.g. F:\\EGX-Monitor) and double-click 'EGX Monitor.exe'. No Python or Node.js needed. Built from ${{ github.ref_name }} @ ${{ github.sha }}."

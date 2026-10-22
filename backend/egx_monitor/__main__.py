@@ -2,21 +2,43 @@
 
 from __future__ import annotations
 
-import argparse
-import logging
-import os
-import socket
-import threading
 import time
-import webbrowser
 
-import uvicorn
+STARTED = time.perf_counter()  # measured before the heavier imports below
 
-from .config import PROJECT_ROOT
+import argparse  # noqa: E402
+import logging  # noqa: E402
+import os  # noqa: E402
+import socket  # noqa: E402
+import sys  # noqa: E402
+import threading  # noqa: E402
+import webbrowser  # noqa: E402
+
+import uvicorn  # noqa: E402
+
+from .config import FROZEN, PROJECT_ROOT, RESOURCES  # noqa: E402
 
 APP_TITLE = "EGX Monitor"
-ICON_ICO = PROJECT_ROOT / "assets" / "icon.ico"
-ICON_PNG = PROJECT_ROOT / "assets" / "icon.png"
+ICON_ICO = RESOURCES / "assets" / "icon.ico"
+ICON_PNG = RESOURCES / "assets" / "icon.png"
+LOG_FILE = PROJECT_ROOT / "egx-monitor.log"
+
+log = logging.getLogger("egx_monitor")
+
+
+def step(name: str) -> None:
+    """Startup timing, so a slow launch can be traced to one step (see egx-monitor.log)."""
+    log.info("[startup %5.1fs] %s", time.perf_counter() - STARTED, name)
+
+
+def _setup_logging() -> None:
+    # pythonw (used by the desktop shortcut) has no console, so always log to a file too.
+    handlers: list[logging.Handler] = [logging.FileHandler(LOG_FILE, mode="w", encoding="utf-8")]
+    if sys.stderr:
+        handlers.append(logging.StreamHandler())
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s", handlers=handlers)
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+
 
 def _free_port(preferred: int) -> int:
     with socket.socket() as s:
@@ -70,21 +92,57 @@ def _windows_set_icon() -> None:
             user32.SendMessageW(hwnd, WM_SETICON, kind, icon)
 
 
+def _first_run_shortcuts(settings) -> None:
+    """Packaged .exe only: add the desktop icon + start-at-login once, in the background."""
+    if not FROZEN or settings.shortcuts_installed:
+        return
+
+    def run() -> None:
+        from . import shortcuts
+
+        try:
+            for path in shortcuts.install():
+                log.info("created shortcut %s", path)
+            settings.shortcuts_installed = True
+            settings.save()
+        except Exception as exc:
+            log.warning("could not create shortcuts: %s", exc)
+
+    threading.Thread(target=run, daemon=True).start()
+
+
 def main() -> None:
     p = argparse.ArgumentParser(description="EGX Monitor dashboard")
     p.add_argument("--port", type=int, default=8765)
     p.add_argument("--browser", action="store_true", help="open in the default browser instead of a desktop window")
     p.add_argument("--server-only", action="store_true", help="only run the API/web server (for development)")
     p.add_argument("--windowed", action="store_true", help="start as a normal window instead of maximized")
+    p.add_argument("--install-shortcuts", action="store_true", help="add the desktop icon and start-at-login, then exit")
+    p.add_argument("--uninstall-shortcuts", action="store_true", help="remove the desktop icon and start-at-login, then exit")
     args = p.parse_args()
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-    from .config import CONFIG_FILE
+    _setup_logging()
+    step(f"Python started and imports loaded (log: {LOG_FILE})")
 
+    if args.install_shortcuts or args.uninstall_shortcuts:
+        from . import shortcuts
+
+        for path in shortcuts.install() if args.install_shortcuts else shortcuts.uninstall():
+            log.info("%s %s", "created" if args.install_shortcuts else "removed", path)
+        return
+
+    from .config import CONFIG_FILE
+    from .server import app, settings
+
+    step("dashboard server loaded")
     print(f"Settings file: {CONFIG_FILE}")
 
     port = _free_port(args.port)
     url = f"http://127.0.0.1:{port}/"
-    config = uvicorn.Config("egx_monitor.server:app", host="127.0.0.1", port=port, log_level="warning")
+    # log_config=None: keep our logging setup (uvicorn would otherwise close the log file handler).
+    # Explicit loop/http/ws so the packaged .exe doesn't depend on uvicorn's dynamic imports.
+    config = uvicorn.Config(
+        app, host="127.0.0.1", port=port, log_level="warning", log_config=None, loop="asyncio", http="h11", ws="none"
+    )
     server = uvicorn.Server(config)
 
     if args.server_only:
@@ -92,19 +150,24 @@ def main() -> None:
         server.run()
         return
 
+    _first_run_shortcuts(settings)
     threading.Thread(target=server.run, daemon=True).start()
     _wait_until_up(port)
+    step("local server is up")
 
     if not args.browser:
         try:
             import webview  # pywebview
 
+            step("window library loaded")
             _windows_taskbar_identity()
             window = webview.create_window(
                 APP_TITLE, url, width=1600, height=960, min_size=(1100, 700),
                 maximized=not args.windowed, background_color="#0b0d10",
             )
             window.events.shown += _windows_set_icon
+            window.events.shown += lambda: step("window shown")
+            window.events.loaded += lambda: step("dashboard page loaded")
             # `icon` is used by the GTK/Qt backends (Linux); Windows is handled by _windows_set_icon.
             webview.start(icon=str(ICON_PNG))
             server.should_exit = True

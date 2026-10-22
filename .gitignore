@@ -19,3 +19,7 @@ Thumbs.db
 
 # Personal settings (watchlist, keys) — created on first run
 /config.json
+egx-monitor.log
+backend/build/
+backend/dist/
+*.spec
