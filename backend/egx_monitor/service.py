@@ -17,6 +17,7 @@ from .providers import Provider, SimulatedProvider, TradingViewProvider
 log = logging.getLogger("egx_monitor")
 
 MIN_MOVER_VALUE = 1_000_000  # EGP traded today
+RETRY_LIVE_AFTER = 20  # seconds, after falling back to simulated data
 
 
 class MarketService:
@@ -51,6 +52,8 @@ class MarketService:
     # ---- snapshot -----------------------------------------------------------
     def _ttl(self) -> float:
         s = self.settings
+        if self._snapshot and s.data_mode == "auto" and not self._snapshot["source"]["live"]:
+            return RETRY_LIVE_AFTER
         return s.refresh_open if market_status()["isOpen"] else s.refresh_closed
 
     async def snapshot(self, force: bool = False) -> dict:

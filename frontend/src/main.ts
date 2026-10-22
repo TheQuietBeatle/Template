@@ -1,3 +1,9 @@
+// Fonts are bundled with the app so the first paint never waits on the internet.
+import "@fontsource/inter/latin-400.css";
+import "@fontsource/inter/latin-600.css";
+import "@fontsource/inter/latin-800.css";
+import "@fontsource/jetbrains-mono/latin-400.css";
+import "@fontsource/jetbrains-mono/latin-700.css";
 import "./style.css";
 import { api } from "./api";
 import { PriceChart } from "./chart";
@@ -166,6 +172,8 @@ async function loadSnapshot(force = false): Promise<void> {
   }
 }
 
+let firstSnapshot: Promise<void> = Promise.resolve();
+
 let chartReq = 0;
 async function loadChart(): Promise<void> {
   const req = ++chartReq;
@@ -173,6 +181,7 @@ async function loadChart(): Promise<void> {
   msg.textContent = "Loading…";
   try {
     const data = await api.chart(state.selected, state.range);
+    await firstSnapshot; // the previous-close line needs the quote
     if (req !== chartReq) return; // a newer request superseded this one
     if (!data.bars.length) {
       chart.clear();
@@ -287,8 +296,8 @@ $("clock").textContent = `${clockFmt.format(new Date())} CAI`;
 // ---------------------------------------------------------------- boot + refresh loop
 async function boot(): Promise<void> {
   api.settings().then((s) => setTheme(s.theme)).catch(() => setTheme("dark"));
-  await loadSnapshot();
-  await Promise.all([loadChart(), loadBrief()]);
+  firstSnapshot = loadSnapshot();
+  await Promise.all([firstSnapshot, loadChart(), loadBrief()]);
   scheduleRefresh();
 }
 

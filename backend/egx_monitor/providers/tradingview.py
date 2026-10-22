@@ -57,7 +57,7 @@ class TradingViewProvider(Provider):
     live = True
 
     def __init__(self) -> None:
-        self._client = httpx.AsyncClient(timeout=15, headers=HEADERS)
+        self._client = httpx.AsyncClient(timeout=httpx.Timeout(10, connect=4), headers=HEADERS)
 
     async def _scan(self, market: str, payload: dict) -> list[dict]:
         r = await self._client.post(SCAN_URL.format(market=market), json=payload)
@@ -91,7 +91,7 @@ class TradingViewProvider(Provider):
 
     async def bars(self, symbol: str, range_: str) -> list[Bar]:
         interval, count = RANGES.get(range_, RANGES["1D"])
-        return await asyncio.wait_for(_fetch_bars(f"EGX:{symbol}", interval, count), timeout=20)
+        return await asyncio.wait_for(_fetch_bars(f"EGX:{symbol}", interval, count), timeout=12)
 
 
 def _frame(func: str, params: list) -> str:
@@ -104,7 +104,7 @@ async def _fetch_bars(tv_symbol: str, interval: str, count: int) -> list[Bar]:
 
     session = "cs_" + "".join(random.choices(string.ascii_lowercase, k=12))
     symbol_spec = "=" + json.dumps({"symbol": tv_symbol, "adjustment": "splits"})
-    async with websockets.connect(WS_URL, origin="https://www.tradingview.com", open_timeout=15) as ws:
+    async with websockets.connect(WS_URL, origin="https://www.tradingview.com", open_timeout=6) as ws:
         for func, params in [
             ("set_auth_token", ["unauthorized_user_token"]),
             ("chart_create_session", [session, ""]),

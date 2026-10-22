@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import asyncio
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
@@ -18,7 +20,17 @@ STATIC_DIR = Path(__file__).parent / "static"
 
 settings = Settings.load()
 service = MarketService(settings)
-app = FastAPI(title="EGX Monitor")
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    # Warm the cache while the desktop window is still opening.
+    warmup = asyncio.create_task(service.snapshot())
+    yield
+    warmup.cancel()
+
+
+app = FastAPI(title="EGX Monitor", lifespan=lifespan)
 # The Vite dev server (npm run dev) runs on another port.
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
