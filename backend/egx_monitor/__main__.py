@@ -7,6 +7,7 @@ import time
 STARTED = time.perf_counter()  # measured before the heavier imports below
 
 import argparse  # noqa: E402
+import faulthandler  # noqa: E402
 import logging  # noqa: E402
 import os  # noqa: E402
 import socket  # noqa: E402
@@ -38,6 +39,22 @@ def _setup_logging() -> None:
         handlers.append(logging.StreamHandler())
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s", handlers=handlers)
     logging.getLogger("httpx").setLevel(logging.WARNING)
+    # pywebview reports which browser engine it picks at DEBUG level.
+    logging.getLogger("pywebview").setLevel(logging.DEBUG)
+    # A hard crash (e.g. inside the browser engine) still leaves a trace in the log.
+    faulthandler.enable(file=handlers[0].stream)
+
+
+def _watch_window_startup(log_stream) -> None:
+    """If the window hasn't appeared after 20s, write every thread's stack to the log to show where it is stuck."""
+    faulthandler.dump_traceback_later(20, repeat=False, file=log_stream)
+
+
+def _window_shown() -> None:
+    faulthandler.cancel_dump_traceback_later()
+    import webview
+
+    step(f"window shown (browser engine: {getattr(webview, 'renderer', None) or 'unknown'})")
 
 
 def _free_port(preferred: int) -> int:
@@ -165,9 +182,11 @@ def main() -> None:
                 APP_TITLE, url, width=1600, height=960, min_size=(1100, 700),
                 maximized=not args.windowed, background_color="#0b0d10",
             )
+            window.events.shown += _window_shown
             window.events.shown += _windows_set_icon
-            window.events.shown += lambda: step("window shown")
             window.events.loaded += lambda: step("dashboard page loaded")
+            step("opening window")
+            _watch_window_startup(logging.getLogger().handlers[0].stream)
             # `icon` is used by the GTK/Qt backends (Linux); Windows is handled by _windows_set_icon.
             webview.start(icon=str(ICON_PNG))
             server.should_exit = True
