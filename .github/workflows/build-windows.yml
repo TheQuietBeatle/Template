@@ -43,6 +43,7 @@ jobs:
           --add-data "egx_monitor\static;egx_monitor\static"
           --add-data "..\assets;assets"
           --hidden-import egx_monitor.server
+          --collect-data tzdata
           launcher.py
 
       - name: Smoke test the packaged app
