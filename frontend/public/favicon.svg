@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- EGX Monitor app icon: gold pyramid with a breakout price line. -->
+  <rect width="512" height="512" rx="112" fill="#0E1420"/>
+  <polygon points="256,118 92,396 292,396" fill="#F5B83D"/>
+  <polygon points="256,118 292,396 420,396" fill="#D98E1F"/>
+  <polygon points="256,118 92,396 420,396" fill="none" stroke="#3B82F6" stroke-width="12" stroke-linejoin="round"/>
+  <!-- dark casing so the line reads on top of the gold faces -->
+  <polyline points="92,396 162,316 208,350 304,214 398,108" fill="none" stroke="#0E1420" stroke-width="44" stroke-linecap="round" stroke-linejoin="round"/>
+  <polyline points="92,396 162,316" fill="none" stroke="#16C784" stroke-width="24" stroke-linecap="round"/>
+  <polyline points="162,316 208,350" fill="none" stroke="#F6465D" stroke-width="24" stroke-linecap="round"/>
+  <polyline points="208,350 304,214 398,108" fill="none" stroke="#16C784" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="398" cy="108" r="30" fill="#0E1420"/>
+  <circle cx="398" cy="108" r="21" fill="#16C784"/>
+  <path d="M452 46 L459 66 L479 73 L459 80 L452 100 L445 80 L425 73 L445 66 Z" fill="#2DD4BF"/>
+</svg>

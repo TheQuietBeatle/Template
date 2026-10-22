@@ -35,6 +35,18 @@ backend\.venv\Scripts\python scripts\autostart.py uninstall  # Windows
 - `run.sh --browser` opens it in your normal browser instead of a separate window.
 - `run.sh --windowed` starts in a normal window instead of maximized.
 
+## App icon
+
+The icon lives in `assets/`: `icon.svg` (source), `icon.ico` (Windows shortcut + taskbar) and `icon.png` (Linux).
+To use your own logo, replace `assets/icon.png` with a square PNG (at least 256×256), then rebuild the `.ico`:
+
+```sh
+backend/.venv/bin/python -m pip install pillow
+backend/.venv/bin/python -c "from PIL import Image; Image.open('assets/icon.png').save('assets/icon.ico', sizes=[(16,16),(32,32),(48,48),(256,256)])"
+```
+
+…and run `scripts/autostart.py install` again so the desktop shortcut picks it up.
+
 ## What's on screen
 
 | Area | Contents |

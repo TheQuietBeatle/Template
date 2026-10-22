@@ -18,6 +18,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 BACKEND = ROOT / "backend"
+ICON_ICO = ROOT / "assets" / "icon.ico"
+ICON_PNG = ROOT / "assets" / "icon.png"
 APP_NAME = "EGX Monitor"
 
 
@@ -52,9 +54,10 @@ def _win_shortcut(path: Path) -> None:
     ps = (
         "$s=(New-Object -ComObject WScript.Shell).CreateShortcut($env:LNK);"
         "$s.TargetPath=$env:TARGET;$s.Arguments='-m egx_monitor';"
-        "$s.WorkingDirectory=$env:WORKDIR;$s.Description='Egyptian Exchange market monitor';$s.Save()"
+        "$s.WorkingDirectory=$env:WORKDIR;$s.Description='Egyptian Exchange market monitor';"
+        "$s.IconLocation=$env:ICON+',0';$s.Save()"
     )
-    env = {**os.environ, "LNK": str(path), "TARGET": _python(windowless=True), "WORKDIR": str(BACKEND)}
+    env = {**os.environ, "LNK": str(path), "TARGET": _python(windowless=True), "WORKDIR": str(BACKEND), "ICON": str(ICON_ICO)}
     subprocess.run(["powershell", "-NoProfile", "-Command", ps], check=True, env=env)
 
 
@@ -99,7 +102,7 @@ def _linux_entry() -> str:
         "[Desktop Entry]\nType=Application\n"
         f"Name={APP_NAME}\nComment=Egyptian Exchange market monitor\n"
         f'Exec=sh -c \'cd "{BACKEND}" && exec "{_python(False)}" -m egx_monitor\'\n'
-        "Terminal=false\nCategories=Office;Finance;\nX-GNOME-Autostart-enabled=true\n"
+        f"Icon={ICON_PNG}\nTerminal=false\nCategories=Office;Finance;\nX-GNOME-Autostart-enabled=true\n"
     )
 
 
