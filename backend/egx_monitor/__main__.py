@@ -187,8 +187,9 @@ def main() -> None:
             window.events.loaded += lambda: step("dashboard page loaded")
             step("opening window")
             _watch_window_startup(logging.getLogger().handlers[0].stream)
-            # `icon` is used by the GTK/Qt backends (Linux); Windows is handled by _windows_set_icon.
-            webview.start(icon=str(ICON_PNG))
+            # On Windows the icon is set by _windows_set_icon. Never pass it to pywebview there: pywebview 6
+            # hands it to .NET's Icon class, which rejects PNG data with an exception that kills the app.
+            webview.start(**({} if os.name == "nt" else {"icon": str(ICON_PNG)}))
             faulthandler.cancel_dump_traceback_later()
             step("window closed")
             server.should_exit = True

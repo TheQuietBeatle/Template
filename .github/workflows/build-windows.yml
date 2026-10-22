@@ -66,6 +66,25 @@ jobs:
           if (-not $ok) { throw "packaged app did not serve the dashboard" }
           Write-Host "Source: $($snap.source.name); EGX30 = $($snap.indices[0].last)"
 
+      - name: Smoke test the desktop window
+        working-directory: backend/dist/EGX Monitor
+        shell: pwsh
+        run: |
+          # Opens the real window (as a double-click would) and fails if the app crashes.
+          $p = Start-Process -FilePath ".\EGX Monitor.exe" -PassThru
+          $loaded = $false
+          foreach ($i in 1..30) {
+            Start-Sleep -Seconds 2
+            if ($p.HasExited) { break }
+            if (Select-String -Path .\egx-monitor.log -Pattern "dashboard page loaded" -Quiet -ErrorAction SilentlyContinue) { $loaded = $true; break }
+          }
+          $crashed = $p.HasExited
+          if (-not $crashed) { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue }
+          Get-Content .\egx-monitor.log -ErrorAction SilentlyContinue
+          Remove-Item .\egx-monitor.log, .\config.json -ErrorAction SilentlyContinue
+          if ($crashed) { throw "the app exited while opening its window (exit code $($p.ExitCode))" }
+          if (-not $loaded) { Write-Host "::warning::window did not report 'dashboard page loaded' within 60s" }
+
       - name: Zip
         shell: pwsh
         run: Compress-Archive -Path "backend\dist\EGX Monitor" -DestinationPath EGX-Monitor-Windows.zip
