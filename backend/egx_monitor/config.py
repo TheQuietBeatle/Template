@@ -1,4 +1,7 @@
-"""User settings, stored as JSON in ~/.egx-monitor/config.json so they survive updates."""
+"""User settings, stored as JSON in config.json at the root of the project folder.
+
+The file is git-ignored, so pulling updates never overwrites it.
+"""
 
 from __future__ import annotations
 
@@ -7,8 +10,11 @@ import os
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
-CONFIG_DIR = Path(os.environ.get("EGX_MONITOR_HOME", Path.home() / ".egx-monitor"))
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+CONFIG_DIR = Path(os.environ.get("EGX_MONITOR_HOME", PROJECT_ROOT))
 CONFIG_FILE = CONFIG_DIR / "config.json"
+# Earlier versions kept settings in the home folder; carry them over once.
+LEGACY_CONFIG_FILE = Path.home() / ".egx-monitor" / "config.json"
 
 DEFAULT_WATCHLIST = [
     "COMI",  # Commercial International Bank
@@ -37,6 +43,11 @@ class Settings:
 
     @classmethod
     def load(cls) -> "Settings":
+        if not CONFIG_FILE.exists() and "EGX_MONITOR_HOME" not in os.environ and LEGACY_CONFIG_FILE.exists():
+            try:
+                CONFIG_FILE.write_text(LEGACY_CONFIG_FILE.read_text(encoding="utf-8"), encoding="utf-8")
+            except OSError:
+                pass
         if not CONFIG_FILE.exists():
             # First run: write the defaults so there is a file to find and edit.
             settings = cls()

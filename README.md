@@ -65,14 +65,9 @@ screen and never calls an AI service, so it can't invent prices. Nothing here is
 
 ## Settings
 
-Your settings are stored outside the repo, so pulling updates won't reset them. The file is created the first time
-the app starts, and its path is printed in the terminal at startup:
-
-| OS | Location |
-| --- | --- |
-| Windows | `C:\Users\<you>\.egx-monitor\config.json` (paste `%USERPROFILE%\.egx-monitor` into File Explorer's address bar) |
-| macOS | `/Users/<you>/.egx-monitor/config.json` (hidden folder: in Finder press Cmd+Shift+G and enter `~/.egx-monitor`) |
-| Linux | `~/.egx-monitor/config.json` |
+Your settings live in **`config.json` in the project folder** (next to this README), e.g.
+`F:\path\to\Template\config.json`. It's created the first time the app starts, its path is printed at startup,
+and it's git-ignored so pulling updates never overwrites it.
 
 Restart the app after editing it.
 

@@ -16,3 +16,6 @@ backend/egx_monitor/static/
 Thumbs.db
 .vscode/
 .idea/
+
+# Personal settings (watchlist, keys) — created on first run
+/config.json
