@@ -39,8 +39,8 @@ def _setup_logging() -> None:
         handlers.append(logging.StreamHandler())
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s", handlers=handlers)
     logging.getLogger("httpx").setLevel(logging.WARNING)
-    # pywebview reports which browser engine it picks at DEBUG level.
-    logging.getLogger("pywebview").setLevel(logging.DEBUG)
+    # pywebview reports which browser engine it picks at DEBUG level; it reads this when imported.
+    os.environ.setdefault("PYWEBVIEW_LOG", "debug")
     # A hard crash (e.g. inside the browser engine) still leaves a trace in the log.
     faulthandler.enable(file=handlers[0].stream)
 
@@ -189,6 +189,8 @@ def main() -> None:
             _watch_window_startup(logging.getLogger().handlers[0].stream)
             # `icon` is used by the GTK/Qt backends (Linux); Windows is handled by _windows_set_icon.
             webview.start(icon=str(ICON_PNG))
+            faulthandler.cancel_dump_traceback_later()
+            step("window closed")
             server.should_exit = True
             return
         except Exception as exc:  # pywebview missing or no GUI backend
