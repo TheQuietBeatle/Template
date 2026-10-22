@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(.venv/Scripts/python -m egx_monitor)",
+      "Bash(.venv/Scripts/pip install:*)",
+      "Bash(.venv/Scripts/python -c \"from egx_monitor.market_hours import CAIRO, market_status; print\\('OK:', CAIRO\\)\" 2>&1)",
+      "Bash(.venv/Scripts/python -c \"import webview; print\\('pywebview OK:', webview.__version__\\)\" 2>&1s)",
+      "Bash(.venv/Scripts/python -c \"import webview; print\\('pywebview OK'\\)\" 2>&1)",
+      "Bash(/f/EGX-Monitor/backend/.venv/Scripts/python -m egx_monitor --server-only)",
+      "Bash(.venv/Scripts/python -c \"\nimport sys\nsys.stdout.reconfigure\\(line_buffering=True\\)\nfrom egx_monitor.__main__ import main\nmain\\(\\)\n\" 2>&1)"
+    ]
+  }
+}
