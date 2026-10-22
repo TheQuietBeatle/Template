@@ -37,9 +37,18 @@ class Settings:
 
     @classmethod
     def load(cls) -> "Settings":
+        if not CONFIG_FILE.exists():
+            # First run: write the defaults so there is a file to find and edit.
+            settings = cls()
+            try:
+                settings.save()
+            except OSError:
+                pass
+            return settings
         try:
             raw = json.loads(CONFIG_FILE.read_text(encoding="utf-8"))
         except (OSError, ValueError):
+            # Unreadable or hand-edited into invalid JSON: run on defaults but leave the file alone.
             return cls()
         known = {k: v for k, v in raw.items() if k in cls.__dataclass_fields__}
         return cls(**known)
