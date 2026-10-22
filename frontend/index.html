@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EGX Monitor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <div id="app">
+      <header class="top">
+        <div class="brand">
+          <h1>EGX Monitor</h1>
+          <span class="sub">EGYPTIAN EXCHANGE · CAIRO</span>
+        </div>
+        <div id="indices" class="indices"></div>
+        <div id="source" class="chip"></div>
+        <div class="spacer"></div>
+        <div id="status" class="status"></div>
+        <div id="clock" class="clock mono"></div>
+        <button id="theme" class="icon-btn" title="Toggle theme">☀</button>
+      </header>
+
+      <div class="tape-row">
+        <div class="tape"><div id="tape" class="tape-track mono"></div></div>
+        <button id="tape-toggle" class="tape-btn mono">Pause tape</button>
+      </div>
+
+      <main class="grid">
+        <aside class="left panel">
+          <nav class="tabs" id="left-tabs">
+            <button data-tab="watch" class="active">WATCHLIST</button>
+            <button data-tab="fx">EGP FX</button>
+            <span id="watch-count" class="muted mono small"></span>
+          </nav>
+          <form id="add-form" class="add">
+            <input id="add-input" list="universe" placeholder="Symbol or company name" autocomplete="off" />
+            <datalist id="universe"></datalist>
+            <button type="submit">Add</button>
+          </form>
+          <div id="add-msg" class="hint"></div>
+          <div id="left-list" class="list"></div>
+        </aside>
+
+        <section class="center">
+          <div class="panel chart-panel">
+            <div class="chart-head">
+              <div>
+                <div class="title-line">
+                  <span id="sel-symbol" class="mono strong"></span>
+                  <span id="sel-name" class="mono strong"></span>
+                  <span id="sel-price" class="price mono"></span>
+                  <span id="sel-change" class="mono"></span>
+                </div>
+                <div id="sel-stats" class="stats mono"></div>
+              </div>
+              <div id="ranges" class="ranges mono">
+                <button data-range="1D" class="active">1D</button>
+                <button data-range="1W">1W</button>
+                <button data-range="1M">1M</button>
+                <button data-range="6M">6M</button>
+                <button data-range="1Y">1Y</button>
+              </div>
+            </div>
+            <div id="chart" class="chart"></div>
+            <div id="chart-msg" class="chart-msg"></div>
+          </div>
+          <div class="panel heat-panel">
+            <div class="section-head mono">
+              <span>SECTOR HEAT</span><span class="muted">MCAP-WEIGHTED · 1D %</span>
+            </div>
+            <div id="heat" class="heat"></div>
+          </div>
+        </section>
+
+        <aside class="right panel">
+          <nav class="tabs" id="right-tabs">
+            <button data-tab="gainers" class="active">GAINERS</button>
+            <button data-tab="losers">LOSERS</button>
+            <button data-tab="active">ACTIVE</button>
+            <button data-tab="breadth">BREADTH</button>
+          </nav>
+          <div id="right-list" class="list movers"></div>
+          <div class="analysis">
+            <div class="analysis-head">
+              <span class="mono strong">✦ MARKET ANALYSIS</span>
+              <span class="badge mono">RULE-BASED</span>
+            </div>
+            <div id="brief-kinds" class="pills">
+              <button data-kind="market" class="active">Market Brief</button>
+              <button data-kind="sectors">Sector Read</button>
+              <button data-kind="risk">Risk Notes</button>
+            </div>
+            <p id="brief" class="brief"></p>
+            <div class="analysis-foot">
+              <button id="regen">Regenerate</button>
+              <span class="muted small mono">Not investment advice</span>
+            </div>
+          </div>
+        </aside>
+      </main>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
